@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/di/dependency_injection.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'core/network/dio_client.dart';
 import 'data/datasources/local/auth_local_datasource.dart';
-import 'data/datasources/remote/auth_remote_datasource.dart';
 import 'data/repositories/auth_repository.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
+import 'presentation/bloc/home/home_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,14 +19,12 @@ void main() async {
   // Initialize SharedPreferences
   final prefs = await SharedPreferences.getInstance();
 
-  // Initialize dependencies
-  final dioClient = DioClient();
-  final authRemoteDataSource = AuthRemoteDataSource(dioClient);
+  // Setup dependency injection
+  await setupDependencyInjection();
+
+  // Setup auth local datasource with SharedPreferences
   final authLocalDataSource = AuthLocalDataSource(prefs);
-  final authRepository = AuthRepository(
-    authRemoteDataSource,
-    authLocalDataSource,
-  );
+  final authRepository = AuthRepository(getIt(), authLocalDataSource);
 
   runApp(MyApp(authRepository: authRepository));
 }
@@ -38,8 +36,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthBloc(authRepository),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => AuthBloc(authRepository)),
+        BlocProvider(create: (context) => getIt<HomeBloc>()),
+      ],
       child: MaterialApp.router(
         title: 'iLearn',
         debugShowCheckedModeBanner: false,

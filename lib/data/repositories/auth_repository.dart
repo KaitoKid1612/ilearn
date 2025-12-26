@@ -22,13 +22,11 @@ class AuthRepository {
       final response = await _remoteDataSource.login(request);
 
       // Save to local storage
-      await _localDataSource.saveToken(response.token);
-      if (response.refreshToken != null) {
-        await _localDataSource.saveRefreshToken(response.refreshToken!);
-      }
-      await _localDataSource.saveUser(response.user);
+      await _localDataSource.saveToken(response.data.accessToken);
+      await _localDataSource.saveRefreshToken(response.data.refreshToken);
+      await _localDataSource.saveUser(response.data.user);
 
-      return Right(response.user.toEntity());
+      return Right(response.data.user.toEntity());
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } on UnauthorizedException catch (e) {
@@ -56,13 +54,11 @@ class AuthRepository {
       final response = await _remoteDataSource.register(request);
 
       // Save to local storage
-      await _localDataSource.saveToken(response.token);
-      if (response.refreshToken != null) {
-        await _localDataSource.saveRefreshToken(response.refreshToken!);
-      }
-      await _localDataSource.saveUser(response.user);
+      await _localDataSource.saveToken(response.data.accessToken);
+      await _localDataSource.saveRefreshToken(response.data.refreshToken);
+      await _localDataSource.saveUser(response.data.user);
 
-      return Right(response.user.toEntity());
+      return Right(response.data.user.toEntity());
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } on ValidationException catch (e) {

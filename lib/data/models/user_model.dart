@@ -9,9 +9,8 @@ class UserModel {
   final String email;
   final String name;
   final String? avatar;
-  @JsonKey(name: 'created_at')
+  final String? role;
   final String createdAt;
-  @JsonKey(name: 'updated_at')
   final String? updatedAt;
 
   const UserModel({
@@ -19,6 +18,7 @@ class UserModel {
     required this.email,
     required this.name,
     this.avatar,
+    this.role,
     required this.createdAt,
     this.updatedAt,
   });

@@ -8,16 +8,28 @@ part of 'auth_response_model.dart';
 
 AuthResponseModel _$AuthResponseModelFromJson(Map<String, dynamic> json) =>
     AuthResponseModel(
-      token: json['token'] as String,
-      refreshToken: json['refresh_token'] as String?,
-      user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
-      expiresAt: json['expires_at'] as String?,
+      success: json['success'] as bool,
+      message: json['message'] as String,
+      data: AuthDataModel.fromJson(json['data'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$AuthResponseModelToJson(AuthResponseModel instance) =>
     <String, dynamic>{
-      'token': instance.token,
-      'refresh_token': instance.refreshToken,
+      'success': instance.success,
+      'message': instance.message,
+      'data': instance.data,
+    };
+
+AuthDataModel _$AuthDataModelFromJson(Map<String, dynamic> json) =>
+    AuthDataModel(
+      user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
+      accessToken: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String,
+    );
+
+Map<String, dynamic> _$AuthDataModelToJson(AuthDataModel instance) =>
+    <String, dynamic>{
       'user': instance.user,
-      'expires_at': instance.expiresAt,
+      'accessToken': instance.accessToken,
+      'refreshToken': instance.refreshToken,
     };

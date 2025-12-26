@@ -18,6 +18,15 @@ class ApiEndpoints {
   static const String changePassword = '$api/user/change-password';
   static const String deleteAccount = '$api/user/delete';
 
+  // Courses
+  static const String courses = '$api/courses';
+  static String courseDetail(String id) => '$api/courses/$id';
+  static String courseEnroll(String id) => '$api/courses/$id/enroll';
+  static String courseProgress(String id) => '$api/courses/$id/progress';
+  static String courseLessons(String courseId) =>
+      '$api/courses/$courseId/lessons';
+  static const String myCourses = '$api/courses/my-courses';
+
   // Lessons
   static const String lessons = '$api/lessons';
   static String lessonDetail(String id) => '$api/lessons/$id';
