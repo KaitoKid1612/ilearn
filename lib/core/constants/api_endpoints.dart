@@ -17,6 +17,7 @@ class ApiEndpoints {
   static const String updateProfile = '$api/user/profile';
   static const String changePassword = '$api/user/change-password';
   static const String deleteAccount = '$api/user/delete';
+  static const String dashboard = '$api/users/me/dashboard';
 
   // Courses
   static const String courses = '$api/courses';
@@ -26,6 +27,10 @@ class ApiEndpoints {
   static String courseLessons(String courseId) =>
       '$api/courses/$courseId/lessons';
   static const String myCourses = '$api/courses/my-courses';
+
+  // Textbooks & Roadmap
+  static String textbookRoadmap(String textbookId) =>
+      '$api/textbooks/$textbookId/roadmap';
 
   // Lessons
   static const String lessons = '$api/lessons';
