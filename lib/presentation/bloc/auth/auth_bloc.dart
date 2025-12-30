@@ -27,8 +27,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
 
     result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (user) => emit(Authenticated(user)),
+      (failure) {
+        emit(AuthError(failure.message));
+      },
+      (user) {
+        emit(Authenticated(user));
+      },
     );
   }
 
@@ -60,8 +64,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await _authRepository.logout();
 
     result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (_) => emit(const Unauthenticated()),
+      (failure) {
+        emit(AuthError(failure.message));
+      },
+      (_) {
+        emit(const Unauthenticated());
+      },
     );
   }
 
@@ -102,16 +110,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     CheckAuthStatus event,
     Emitter<AuthState> emit,
   ) async {
-    final isLoggedIn = _authRepository.isLoggedIn();
+    try {
+      final isLoggedIn = _authRepository.isLoggedIn();
 
-    if (isLoggedIn) {
-      final user = _authRepository.getCurrentUser();
-      if (user != null) {
-        emit(Authenticated(user));
+      if (isLoggedIn) {
+        final user = _authRepository.getCurrentUser();
+
+        if (user != null) {
+          emit(Authenticated(user));
+        } else {
+          await _authRepository.logout();
+          emit(const Unauthenticated());
+        }
       } else {
         emit(const Unauthenticated());
       }
-    } else {
+    } catch (e) {
+      await _authRepository.logout();
       emit(const Unauthenticated());
     }
   }

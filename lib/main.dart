@@ -8,7 +8,6 @@ import 'core/theme/app_theme.dart';
 import 'data/datasources/local/auth_local_datasource.dart';
 import 'data/repositories/auth_repository.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
-import 'presentation/bloc/home/home_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,13 +35,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => AuthBloc(authRepository)),
-        BlocProvider(create: (context) => getIt<HomeBloc>()),
-      ],
+    return BlocProvider(
+      create: (context) => AuthBloc(authRepository),
       child: MaterialApp.router(
-        title: 'iLearn',
+        title: 'iLearn - Học tiếng Nhật',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
