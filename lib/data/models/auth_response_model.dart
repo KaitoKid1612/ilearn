@@ -6,13 +6,17 @@ part 'auth_response_model.g.dart';
 @JsonSerializable()
 class AuthResponseModel {
   final bool success;
+  final int statusCode;
   final String message;
   final AuthDataModel data;
+  final String timestamp;
 
   const AuthResponseModel({
     required this.success,
+    required this.statusCode,
     required this.message,
     required this.data,
+    required this.timestamp,
   });
 
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) =>
@@ -23,14 +27,18 @@ class AuthResponseModel {
 
 @JsonSerializable()
 class AuthDataModel {
-  final UserModel user;
   final String accessToken;
   final String refreshToken;
+  final int expiresIn;
+  final String tokenType;
+  final UserModel user;
 
   const AuthDataModel({
-    required this.user,
     required this.accessToken,
     required this.refreshToken,
+    required this.expiresIn,
+    required this.tokenType,
+    required this.user,
   });
 
   factory AuthDataModel.fromJson(Map<String, dynamic> json) =>
