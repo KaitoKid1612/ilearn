@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ilearn/core/di/dependency_injection.dart';
+import 'package:ilearn/core/theme/app_colors.dart';
 import 'package:ilearn/presentation/bloc/auth/auth_bloc.dart';
 import 'package:ilearn/presentation/bloc/auth/auth_event.dart';
 import 'package:ilearn/presentation/bloc/dashboard/dashboard_bloc.dart';
 import 'package:ilearn/presentation/bloc/dashboard/dashboard_event.dart';
 import 'package:ilearn/presentation/bloc/dashboard/dashboard_state.dart';
-import 'package:ilearn/presentation/screens/dashboard/widgets/dashboard_header.dart';
-import 'package:ilearn/presentation/screens/dashboard/widgets/stats_card.dart';
-import 'package:ilearn/presentation/screens/dashboard/widgets/current_textbook_card.dart';
-import 'package:ilearn/presentation/screens/dashboard/widgets/challenges_section.dart';
-import 'package:ilearn/presentation/screens/dashboard/widgets/achievements_section.dart';
 import 'package:ilearn/presentation/widgets/common/loading_widget.dart';
 import 'package:ilearn/presentation/widgets/common/error_widget.dart' as custom;
+import 'package:ilearn/presentation/screens/dashboard/widgets/user_header_widget.dart';
+import 'package:ilearn/presentation/screens/dashboard/widgets/current_path_card_widget.dart';
+import 'package:ilearn/presentation/screens/dashboard/widgets/units_list_widget.dart';
+
+/// 🗺️ DASHBOARD SCREEN (Main Learning Dashboard)
+/// API Call: GET /api/v1/users/me/dashboard
+/// Response: { success, data: { user, currentPath, units[], overallProgress } }
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -34,31 +37,30 @@ class DashboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: BlocConsumer<DashboardBloc, DashboardState>(
         listener: (context, state) {
           if (state is DashboardError) {
-            print('🚨 Dashboard Error: ${state.message}');
-
             // Check if error is related to authentication
             final errorMessage = state.message.toLowerCase();
             if (errorMessage.contains('user not found') ||
                 errorMessage.contains('unauthorized') ||
                 errorMessage.contains('unauthenticated') ||
                 errorMessage.contains('internal server error')) {
-              print(
-                '⚠️ Dashboard: Auth error detected, clearing cache and logging out...',
-              );
-
               // Logout and redirect to login
               context.read<AuthBloc>().add(const LogoutRequested());
 
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
+                SnackBar(
+                  content: const Text(
                     'Phiên đăng nhập đã hết hạn hoặc tài khoản không tồn tại. Vui lòng đăng nhập lại.',
                   ),
-                  backgroundColor: Colors.red,
-                  duration: Duration(seconds: 3),
+                  backgroundColor: AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  duration: const Duration(seconds: 3),
                 ),
               );
 
@@ -83,14 +85,22 @@ class DashboardView extends StatelessWidget {
             );
           }
 
-          if (state is DashboardLoaded ||
-              state is RoadmapLoading ||
-              state is RoadmapError) {
-            final dashboard = state is DashboardLoaded
-                ? state.dashboard
-                : state is RoadmapLoading
-                ? state.dashboard
-                : (state as RoadmapError).dashboard;
+          if (state is DashboardLoaded) {
+            final dashboard = state.dashboard;
+
+            // Calculate actual overall progress from lessons
+            int totalLessons = 0;
+            int completedLessons = 0;
+            for (var unit in dashboard.units) {
+              totalLessons += unit.lessons.length;
+              completedLessons += unit.lessons
+                  .where((l) => l.isCompleted)
+                  .length;
+            }
+
+            final double actualProgress = totalLessons > 0
+                ? (completedLessons / totalLessons) * 100
+                : 0;
 
             return RefreshIndicator(
               onRefresh: () async {
@@ -98,49 +108,67 @@ class DashboardView extends StatelessWidget {
                   const RefreshDashboardEvent(),
                 );
               },
+              color: AppColors.primary,
               child: CustomScrollView(
                 slivers: [
-                  // Header with user info
-                  SliverToBoxAdapter(
-                    child: DashboardHeader(user: dashboard.user),
+                  // App Bar with gradient and User Header
+                  SliverAppBar(
+                    expandedHeight: 220,
+                    floating: false,
+                    pinned: true,
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppColors.primary, AppColors.primaryDark],
+                          ),
+                        ),
+                        child: SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                UserHeaderWidget(user: dashboard.user),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
 
-                  // Stats Card (XP, Gems, Level, Streak)
-                  SliverToBoxAdapter(child: StatsCard(stats: dashboard.stats)),
+                  // Current Path Card
+                  SliverToBoxAdapter(
+                    child: CurrentPathCardWidget(
+                      currentPath: dashboard.currentPath,
+                      progress: actualProgress,
+                    ),
+                  ),
 
-                  // Current Textbook Card
-                  if (dashboard.currentTextbook != null)
-                    SliverToBoxAdapter(
-                      child: CurrentTextbookCard(
-                        textbook: dashboard.currentTextbook!,
-                        onTap: () {
-                          // Navigate to roadmap screen
-                          _navigateToRoadmap(
-                            context,
-                            dashboard.currentTextbook!.id,
-                          );
-                        },
+                  // Section Title
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+                      child: Text(
+                        '📚 Lộ trình học tập',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
+                  ),
 
-                  // Active Challenges
-                  if (dashboard.activeChallenges.isNotEmpty)
-                    SliverToBoxAdapter(
-                      child: ChallengesSection(
-                        challenges: dashboard.activeChallenges,
-                      ),
-                    ),
-
-                  // Recent Achievements
-                  if (dashboard.recentAchievements.isNotEmpty)
-                    SliverToBoxAdapter(
-                      child: AchievementsSection(
-                        achievements: dashboard.recentAchievements,
-                      ),
-                    ),
+                  // Units and Lessons
+                  UnitsListWidget(units: dashboard.units),
 
                   // Bottom padding
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
                 ],
               ),
             );
@@ -150,9 +178,5 @@ class DashboardView extends StatelessWidget {
         },
       ),
     );
-  }
-
-  void _navigateToRoadmap(BuildContext context, String textbookId) {
-    context.go('/roadmap/$textbookId');
   }
 }

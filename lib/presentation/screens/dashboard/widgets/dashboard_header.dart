@@ -52,7 +52,7 @@ class DashboardHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  user.name,
+                  user.fullName,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -79,7 +79,7 @@ class DashboardHeader extends StatelessWidget {
 
   Widget _buildDefaultAvatar() {
     return Text(
-      user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+      user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U',
       style: const TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
