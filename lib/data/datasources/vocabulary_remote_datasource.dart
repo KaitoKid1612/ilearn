@@ -1,6 +1,7 @@
 import 'package:ilearn/core/network/dio_client.dart';
 import 'package:ilearn/data/models/vocabulary_model.dart';
 import 'package:ilearn/data/models/vocabulary_progress_model.dart';
+import 'package:ilearn/core/constants/api_endpoints.dart';
 
 abstract class VocabularyRemoteDataSource {
   Future<VocabularyLessonDataModel> getLessonVocabulary(String lessonId);
@@ -9,6 +10,16 @@ abstract class VocabularyRemoteDataSource {
     String lessonId,
     Map<String, dynamic> progressData,
   );
+  Future<void> markItemLearned({
+    required String lessonId,
+    required String itemId,
+    required String itemType,
+  });
+  Future<void> batchMarkLearned({
+    required String lessonId,
+    required String itemType,
+    required List<String> itemIds,
+  });
 }
 
 class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
@@ -79,6 +90,50 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       }
     } catch (e) {
       throw Exception('Failed to submit progress: $e');
+    }
+  }
+
+  @override
+  Future<void> markItemLearned({
+    required String lessonId,
+    required String itemId,
+    required String itemType,
+  }) async {
+    try {
+      final response = await dioClient.post(
+        ApiEndpoints.markItemLearned(lessonId),
+        data: {'itemId': itemId, 'itemType': itemType},
+      );
+
+      if (response.data['success'] != true) {
+        throw Exception(
+          response.data['message'] ?? 'Failed to mark item as learned',
+        );
+      }
+    } catch (e) {
+      throw Exception('Failed to mark item as learned: $e');
+    }
+  }
+
+  @override
+  Future<void> batchMarkLearned({
+    required String lessonId,
+    required String itemType,
+    required List<String> itemIds,
+  }) async {
+    try {
+      final response = await dioClient.post(
+        ApiEndpoints.batchMarkLearned(lessonId),
+        data: {'itemType': itemType, 'itemIds': itemIds},
+      );
+
+      if (response.data['success'] != true) {
+        throw Exception(
+          response.data['message'] ?? 'Failed to batch mark items as learned',
+        );
+      }
+    } catch (e) {
+      throw Exception('Failed to batch mark items as learned: $e');
     }
   }
 }
