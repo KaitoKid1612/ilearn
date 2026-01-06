@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:ilearn/data/models/dashboard_model.dart';
-import 'package:ilearn/data/models/roadmap_model.dart';
 
 abstract class DashboardState extends Equatable {
   const DashboardState();
@@ -18,22 +17,15 @@ class DashboardLoading extends DashboardState {
 }
 
 class DashboardLoaded extends DashboardState {
-  final DashboardDataModel dashboard;
-  final RoadmapDataModel? roadmap;
+  final DashboardResponseModel dashboard;
 
-  const DashboardLoaded({required this.dashboard, this.roadmap});
+  const DashboardLoaded({required this.dashboard});
 
   @override
-  List<Object?> get props => [dashboard, roadmap];
+  List<Object?> get props => [dashboard];
 
-  DashboardLoaded copyWith({
-    DashboardDataModel? dashboard,
-    RoadmapDataModel? roadmap,
-  }) {
-    return DashboardLoaded(
-      dashboard: dashboard ?? this.dashboard,
-      roadmap: roadmap ?? this.roadmap,
-    );
+  DashboardLoaded copyWith({DashboardResponseModel? dashboard}) {
+    return DashboardLoaded(dashboard: dashboard ?? this.dashboard);
   }
 }
 
@@ -47,7 +39,7 @@ class DashboardError extends DashboardState {
 }
 
 class RoadmapLoading extends DashboardState {
-  final DashboardDataModel dashboard;
+  final DashboardResponseModel dashboard;
 
   const RoadmapLoading(this.dashboard);
 
@@ -56,7 +48,7 @@ class RoadmapLoading extends DashboardState {
 }
 
 class RoadmapError extends DashboardState {
-  final DashboardDataModel dashboard;
+  final DashboardResponseModel dashboard;
   final String message;
 
   const RoadmapError({required this.dashboard, required this.message});
