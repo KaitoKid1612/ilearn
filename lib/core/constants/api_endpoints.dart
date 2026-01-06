@@ -36,36 +36,52 @@ class ApiEndpoints {
   static const String lessons = '$api/lessons';
   static String lessonDetail(String id) => '$api/lessons/$id';
   static String lessonProgress(String id) => '$api/lessons/$id/progress';
+  static String lessonVocabulary(String id) => '$api/lessons/$id/vocabulary';
   static const String myLessons = '$api/lessons/my-lessons';
+  static String markItemLearned(String lessonId) =>
+      '$api/lessons/$lessonId/mark-learned';
+  static String batchMarkLearned(String lessonId) =>
+      '$api/lessons/$lessonId/batch-mark-learned';
+
+  // Kanji
+  static String lessonKanji(String lessonId) => '$api/lessons/$lessonId/kanji';
 
   // Flashcards
-  static const String flashcards = '$api/flashcards';
-  static String flashcardDetail(String id) => '$api/flashcards/$id';
-  static String flashcardReview(String id) => '$api/flashcards/$id/review';
-  static const String flashcardDecks = '$api/flashcards/decks';
+  static String flashcardsByLesson(String lessonId) =>
+      '$api/flashcards/lessons/$lessonId';
+  static String flashcardStartStudy(String lessonId) =>
+      '$api/flashcards/lessons/$lessonId/study';
+  static String flashcardAnswer(String flashcardId) =>
+      '$api/flashcards/$flashcardId/answer';
+  static const String flashcardDailyReview = '$api/flashcards/daily-review';
 
-  // Quiz
-  static const String quizzes = '$api/quizzes';
-  static String quizDetail(String id) => '$api/quizzes/$id';
-  static String quizSubmit(String id) => '$api/quizzes/$id/submit';
-  static String quizResults(String id) => '$api/quizzes/$id/results';
+  // Exercises
+  static String lessonExercises(String lessonId) =>
+      '$api/lessons/$lessonId/exercises';
+  static String createMultipleChoiceExercise(String lessonId) =>
+      '$api/exercises/lessons/$lessonId/multiple-choice';
+  static String submitExercise(String exerciseId) =>
+      '$api/exercises/$exerciseId/submit';
 
-  // Test
-  static const String tests = '$api/tests';
-  static String testDetail(String id) => '$api/tests/$id';
-  static String testSubmit(String id) => '$api/tests/$id/submit';
-  static String testResults(String id) => '$api/tests/$id/results';
+  // Exercise Session
+  static String startExerciseSession(String lessonId) =>
+      '$api/lessons/$lessonId/exercises/start-session';
+  static String submitExerciseSession(String lessonId, String sessionId) =>
+      '$api/lessons/$lessonId/exercises/sessions/$sessionId/submit';
 
-  // Games
-  static const String games = '$api/games';
-  static String gameDetail(String id) => '$api/games/$id';
-  static String gameScore(String id) => '$api/games/$id/score';
+  // Typing Exercises
+  static String createTypingExercise(String lessonId, {int limit = 10}) =>
+      '$api/exercises/lessons/$lessonId/typing?limit=$limit';
+  static String submitTypingExercise(String exerciseId) =>
+      '$api/exercises/$exerciseId/submit-typing';
 
-  // AI Content Generation
-  static const String aiGenerateLesson = '$api/ai/generate-lesson';
-  static const String aiGenerateFlashcards = '$api/ai/generate-flashcards';
-  static const String aiGenerateQuiz = '$api/ai/generate-quiz';
-  static const String aiGenerateTest = '$api/ai/generate-test';
+  // Speaking Exercises
+  static String createSpeakingExercise(String lessonId) =>
+      '$api/exercises/lessons/$lessonId/speaking';
+  static String transcribeAudio(String exerciseId) =>
+      '$api/exercises/$exerciseId/transcribe-audio';
+  static String submitSpeakingExercise(String exerciseId) =>
+      '$api/exercises/$exerciseId/submit-speaking';
 
   // Analytics
   static const String analytics = '$api/analytics';

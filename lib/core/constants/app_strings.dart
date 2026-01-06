@@ -50,20 +50,10 @@ class AppStrings {
   // Learning
   static const String lessons = 'Bài học';
   static const String flashcards = 'Flashcard';
-  static const String quizzes = 'Trắc nghiệm';
-  static const String tests = 'Bài test';
-  static const String games = 'Trò chơi';
   static const String startLearning = 'Bắt đầu học';
   static const String continueLesson = 'Tiếp tục học';
   static const String completedLessons = 'Bài đã hoàn thành';
   static const String inProgressLessons = 'Đang học';
-
-  // AI Generation
-  static const String generateContent = 'Tạo nội dung với AI';
-  static const String generateLesson = 'Tạo bài học';
-  static const String generateFlashcards = 'Tạo flashcard';
-  static const String generateQuiz = 'Tạo trắc nghiệm';
-  static const String enterTopic = 'Nhập chủ đề bạn muốn học';
 
   // Error Messages
   static const String networkError = 'Lỗi kết nối mạng';

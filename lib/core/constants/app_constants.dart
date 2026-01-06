@@ -46,9 +46,4 @@ class AppConstants {
     'png',
     'gif',
   ];
-
-  // Learning Settings
-  static const int defaultFlashcardReviewLimit = 20;
-  static const int defaultQuizQuestionCount = 10;
-  static const Duration defaultLessonDuration = Duration(minutes: 30);
 }
