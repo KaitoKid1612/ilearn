@@ -8,7 +8,7 @@ class GetDashboardUseCase {
 
   GetDashboardUseCase(this._repository);
 
-  Future<Either<Failure, DashboardDataModel>> call() async {
+  Future<Either<Failure, DashboardResponseModel>> call() async {
     return await _repository.getDashboard();
   }
 }
