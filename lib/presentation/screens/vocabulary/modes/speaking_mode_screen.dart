@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ilearn/domain/entities/vocabulary.dart';
+import 'package:ilearn/data/models/lesson_vocabulary_model.dart';
 import 'package:ilearn/domain/entities/vocabulary_progress.dart';
 import 'package:ilearn/presentation/bloc/vocabulary/vocabulary_bloc.dart';
 
 class SpeakingModeScreen extends StatefulWidget {
   final String lessonId;
-  final List<Vocabulary> vocabulary;
+  final List<VocabularyItemModel> vocabulary;
   final VocabularyProgress? progress;
 
   const SpeakingModeScreen({
@@ -168,14 +168,13 @@ class _SpeakingModeScreenState extends State<SpeakingModeScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          if (vocab.hiragana != null)
-                            Text(
-                              vocab.hiragana!,
-                              style: const TextStyle(
-                                fontSize: 28,
-                                color: Colors.grey,
-                              ),
+                          Text(
+                            vocab.reading,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              color: Colors.grey,
                             ),
+                          ),
                           const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -187,7 +186,7 @@ class _SpeakingModeScreenState extends State<SpeakingModeScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              vocab.romaji,
+                              vocab.reading,
                               style: const TextStyle(
                                 fontSize: 24,
                                 color: Colors.blue,
@@ -271,7 +270,7 @@ class _SpeakingModeScreenState extends State<SpeakingModeScreen> {
                   const SizedBox(height: 32),
 
                   // Example sentences
-                  if (vocab.examples.isNotEmpty) ...[
+                  if (vocab.example != null && vocab.example!.isNotEmpty) ...[
                     const Divider(),
                     const SizedBox(height: 16),
                     const Text(
@@ -282,23 +281,23 @@ class _SpeakingModeScreenState extends State<SpeakingModeScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ...vocab.examples.map(
-                      (example) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Card(
-                          color: Colors.grey.shade50,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              children: [
-                                Text(
-                                  example.example,
-                                  style: const TextStyle(fontSize: 16),
-                                  textAlign: TextAlign.center,
-                                ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Card(
+                        color: Colors.grey.shade50,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            children: [
+                              Text(
+                                vocab.example!,
+                                style: const TextStyle(fontSize: 16),
+                                textAlign: TextAlign.center,
+                              ),
+                              if (vocab.exampleMeaning != null) ...[
                                 const SizedBox(height: 4),
                                 Text(
-                                  example.translation,
+                                  vocab.exampleMeaning!,
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey,
@@ -306,7 +305,7 @@ class _SpeakingModeScreenState extends State<SpeakingModeScreen> {
                                   textAlign: TextAlign.center,
                                 ),
                               ],
-                            ),
+                            ],
                           ),
                         ),
                       ),

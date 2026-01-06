@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ilearn/core/theme/app_colors.dart';
 import 'package:ilearn/presentation/bloc/vocabulary/vocabulary_bloc.dart';
+import 'package:ilearn/presentation/widgets/common/animations/fade_in_animation.dart';
+import 'package:ilearn/presentation/widgets/common/animations/slide_animation.dart';
 
 class VocabularyLearningScreen extends StatefulWidget {
   final String lessonId;
@@ -28,7 +31,26 @@ class _VocabularyLearningScreenState extends State<VocabularyLearningScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.lessonTitle), elevation: 0),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(
+          widget.lessonTitle,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.primary, AppColors.primaryDark],
+            ),
+          ),
+        ),
+      ),
       body: BlocBuilder<VocabularyBloc, VocabularyState>(
         builder: (context, state) {
           if (state is VocabularyLoading) {
@@ -40,21 +62,38 @@ class _VocabularyLearningScreenState extends State<VocabularyLearningScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  Icon(Icons.error_outline, size: 64, color: AppColors.error),
                   const SizedBox(height: 16),
-                  Text(
-                    'Error: ${state.message}',
-                    style: const TextStyle(fontSize: 16),
-                    textAlign: TextAlign.center,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      state.message,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
                       context.read<VocabularyBloc>().add(
                         LoadVocabularyLesson(widget.lessonId),
                       );
                     },
-                    child: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Thử lại'),
                   ),
                 ],
               ),
@@ -76,122 +115,219 @@ class _VocabularyLearningScreenState extends State<VocabularyLearningScreen> {
           return const Center(child: Text('Unknown state'));
         },
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _navigateToVocabularyList(context),
+        icon: const Icon(Icons.list),
+        label: const Text('Danh sách từ vựng'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      ),
     );
   }
 
   Widget _buildProgressOverview(VocabularyLoaded state) {
-    final progress = state.progress;
+    final total = state.lessonData.vocabularies.length;
+    final learned = state.lessonData.vocabularies
+        .where((v) => v.isLearned)
+        .length;
+    final mastered = state.lessonData.vocabularies
+        .where((v) => v.masteryLevel >= 4)
+        .length;
+    final notStarted = state.lessonData.vocabularies
+        .where((v) => !v.isLearned)
+        .length;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Learning Progress',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return FadeInAnimation(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary.withOpacity(0.1),
+              AppColors.secondary.withOpacity(0.05),
+            ],
           ),
-          const SizedBox(height: 12),
-          if (progress != null) ...[
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.bar_chart,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Tiến độ học tập',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildStatItem(
-                  'Total',
-                  progress.totalVocabulary.toString(),
-                  Colors.blue,
+                  'Tổng số',
+                  total.toString(),
+                  AppColors.primary,
+                  Icons.book,
                 ),
                 _buildStatItem(
-                  'Learned',
-                  progress.learned.toString(),
-                  Colors.green,
+                  'Đã học',
+                  learned.toString(),
+                  AppColors.secondary,
+                  Icons.check_circle,
                 ),
                 _buildStatItem(
-                  'Mastered',
-                  progress.mastered.toString(),
-                  Colors.purple,
+                  'Thành thạo',
+                  mastered.toString(),
+                  AppColors.accent,
+                  Icons.emoji_events,
                 ),
                 _buildStatItem(
-                  'New',
-                  progress.notStarted.toString(),
-                  Colors.orange,
+                  'Mới',
+                  notStarted.toString(),
+                  AppColors.info,
+                  Icons.fiber_new,
                 ),
               ],
             ),
-          ] else ...[
-            const Text('Start learning to track your progress!'),
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
     return Column(
       children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: color,
           ),
         ),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
       ],
     );
   }
 
   Widget _buildLearningModes(BuildContext context, VocabularyLoaded state) {
-    final progress = state.progress?.progressByMode;
-
-    return GridView.count(
-      crossAxisCount: 2,
-      padding: const EdgeInsets.all(16),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildModeCard(
-          context: context,
-          icon: Icons.menu_book,
-          title: 'Learn',
-          subtitle: 'Flashcards',
-          color: Colors.blue,
-          progress: progress?.learn,
-          onTap: () => _navigateToLearnMode(context, state),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            '🎯 Chế độ học tập',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
         ),
-        _buildModeCard(
-          context: context,
-          icon: Icons.quiz,
-          title: 'Practice',
-          subtitle: 'Quiz',
-          color: Colors.green,
-          progress: progress?.practice,
-          onTap: () => _navigateToPracticeMode(context, state),
-        ),
-        _buildModeCard(
-          context: context,
-          icon: Icons.mic,
-          title: 'Speaking',
-          subtitle: 'Pronunciation',
-          color: Colors.orange,
-          progress: progress?.speaking,
-          onTap: () => _navigateToSpeakingMode(context, state),
-        ),
-        _buildModeCard(
-          context: context,
-          icon: Icons.edit,
-          title: 'Writing',
-          subtitle: 'Practice',
-          color: Colors.purple,
-          progress: progress?.writing,
-          onTap: () => _navigateToWritingMode(context, state),
+        const SizedBox(height: 8),
+        Expanded(
+          child: GridView.count(
+            crossAxisCount: 2,
+            padding: const EdgeInsets.all(16),
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            children: [
+              SlideAnimation(
+                direction: SlideDirection.left,
+                delay: const Duration(milliseconds: 100),
+                child: _buildModeCard(
+                  context: context,
+                  icon: Icons.menu_book,
+                  title: 'Học',
+                  subtitle: 'Flashcards',
+                  color: AppColors.primary,
+                  progress: null,
+                  onTap: () => _navigateToLearnMode(context, state),
+                ),
+              ),
+              SlideAnimation(
+                direction: SlideDirection.right,
+                delay: const Duration(milliseconds: 200),
+                child: _buildModeCard(
+                  context: context,
+                  icon: Icons.quiz,
+                  title: 'Luyện tập',
+                  subtitle: 'Trắc nghiệm',
+                  color: AppColors.secondary,
+                  progress: null,
+                  onTap: () => _navigateToPracticeMode(context, state),
+                ),
+              ),
+              SlideAnimation(
+                direction: SlideDirection.left,
+                delay: const Duration(milliseconds: 300),
+                child: _buildModeCard(
+                  context: context,
+                  icon: Icons.mic,
+                  title: 'Phát âm',
+                  subtitle: 'Speaking',
+                  color: AppColors.accent,
+                  progress: null,
+                  onTap: () => _navigateToSpeakingMode(context, state),
+                ),
+              ),
+              SlideAnimation(
+                direction: SlideDirection.right,
+                delay: const Duration(milliseconds: 400),
+                child: _buildModeCard(
+                  context: context,
+                  icon: Icons.edit,
+                  title: 'Viết',
+                  subtitle: 'Writing',
+                  color: AppColors.info,
+                  progress: null,
+                  onTap: () => _navigateToWritingMode(context, state),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -208,16 +344,17 @@ class _VocabularyLearningScreenState extends State<VocabularyLearningScreen> {
   }) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shadowColor: color.withOpacity(0.3),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
-              colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
+              colors: [color.withOpacity(0.15), color.withOpacity(0.05)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -225,31 +362,56 @@ class _VocabularyLearningScreenState extends State<VocabularyLearningScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 48, color: color),
-              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, size: 40, color: color),
+              ),
+              const SizedBox(height: 12),
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),
               ),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
               if (progress != null) ...[
                 const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: progress.percentage / 100,
-                  backgroundColor: Colors.grey.shade300,
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress.percentage / 100,
+                    backgroundColor: AppColors.greyLight,
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                    minHeight: 6,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${progress.completed}/${progress.total}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ],
@@ -261,23 +423,15 @@ class _VocabularyLearningScreenState extends State<VocabularyLearningScreen> {
 
   void _navigateToLearnMode(BuildContext context, VocabularyLoaded state) {
     context.pushNamed(
-      'vocabulary-learn',
-      extra: {
-        'lessonId': widget.lessonId,
-        'vocabulary': state.lessonData.vocabulary,
-        'progress': state.progress,
-      },
+      'flashcard',
+      pathParameters: {'lessonId': widget.lessonId},
     );
   }
 
   void _navigateToPracticeMode(BuildContext context, VocabularyLoaded state) {
     context.pushNamed(
-      'vocabulary-practice',
-      extra: {
-        'lessonId': widget.lessonId,
-        'vocabulary': state.lessonData.vocabulary,
-        'progress': state.progress,
-      },
+      'exercise',
+      pathParameters: {'lessonId': widget.lessonId},
     );
   }
 
@@ -286,20 +440,23 @@ class _VocabularyLearningScreenState extends State<VocabularyLearningScreen> {
       'vocabulary-speaking',
       extra: {
         'lessonId': widget.lessonId,
-        'vocabulary': state.lessonData.vocabulary,
-        'progress': state.progress,
+        'vocabularies': state.lessonData.vocabularies,
       },
     );
   }
 
   void _navigateToWritingMode(BuildContext context, VocabularyLoaded state) {
     context.pushNamed(
-      'vocabulary-writing',
-      extra: {
-        'lessonId': widget.lessonId,
-        'vocabulary': state.lessonData.vocabulary,
-        'progress': state.progress,
-      },
+      'typing-exercise',
+      pathParameters: {'lessonId': widget.lessonId},
+    );
+  }
+
+  void _navigateToVocabularyList(BuildContext context) {
+    context.pushNamed(
+      'vocabulary-list',
+      pathParameters: {'lessonId': widget.lessonId},
+      queryParameters: {'title': widget.lessonTitle},
     );
   }
 }
