@@ -130,6 +130,8 @@ class DioClient {
 }
 
 class AuthInterceptor extends Interceptor {
+  final Dio _dio = Dio();
+
   @override
   void onRequest(
     RequestOptions options,
@@ -148,23 +150,54 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
-      // Token expired, try to refresh
+      print('🔐 Access token expired, attempting silent refresh...');
+
+      // Try to refresh token silently
       final refreshed = await _refreshToken();
+
       if (refreshed) {
-        // Retry the request
-        final opts = Options(
-          method: err.requestOptions.method,
-          headers: err.requestOptions.headers,
+        // Refresh thành công → Retry request với token mới
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final newToken = prefs.getString(AppConstants.tokenKey);
+
+          final opts = Options(
+            method: err.requestOptions.method,
+            headers: {
+              ...err.requestOptions.headers,
+              'Authorization': 'Bearer $newToken',
+            },
+          );
+
+          final clonedRequest = await _dio.request(
+            err.requestOptions.path,
+            options: opts,
+            data: err.requestOptions.data,
+            queryParameters: err.requestOptions.queryParameters,
+          );
+
+          print('✅ Request retried successfully with new token');
+          return handler.resolve(clonedRequest);
+        } catch (e) {
+          print('❌ Retry request failed: $e');
+          return handler.reject(err);
+        }
+      } else {
+        // Refresh token CŨNG hết hạn → Clear data và logout
+        print('❌ Refresh token expired, forcing logout...');
+        await _clearAuthData();
+        return handler.reject(
+          DioException(
+            requestOptions: err.requestOptions,
+            error: 'Session expired. Please login again.',
+            type: DioExceptionType.badResponse,
+            response: err.response,
+          ),
         );
-        final clonedRequest = await Dio().request(
-          err.requestOptions.path,
-          options: opts,
-          data: err.requestOptions.data,
-          queryParameters: err.requestOptions.queryParameters,
-        );
-        return handler.resolve(clonedRequest);
       }
     }
+
+    // Các lỗi khác → Báo bình thường
     super.onError(err, handler);
   }
 
@@ -175,11 +208,46 @@ class AuthInterceptor extends Interceptor {
 
       if (refreshToken == null) return false;
 
-      // Implement refresh token logic here
-      // This is just a placeholder
+      // Call refresh token API
+      final baseUrl = dotenv.env['BASE_URL'] ?? AppConstants.baseUrl;
+      final response = await _dio.post(
+        '$baseUrl/api/v1/auth/refresh',
+        data: {'refreshToken': refreshToken},
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final data = response.data['data'];
+        final newAccessToken = data['accessToken'] ?? data['token'];
+        final newRefreshToken = data['refreshToken'];
+
+        // Save new tokens
+        if (newAccessToken != null) {
+          await prefs.setString(AppConstants.tokenKey, newAccessToken);
+        }
+        if (newRefreshToken != null) {
+          await prefs.setString(AppConstants.refreshTokenKey, newRefreshToken);
+        }
+
+        print('✅ Token refreshed successfully');
+        return true;
+      }
+
       return false;
     } catch (e) {
+      print('❌ Refresh token failed: $e');
       return false;
+    }
+  }
+
+  Future<void> _clearAuthData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(AppConstants.tokenKey);
+      await prefs.remove(AppConstants.refreshTokenKey);
+      await prefs.remove(AppConstants.userKey);
+      print('🔒 Auth data cleared - user logged out');
+    } catch (e) {
+      print('❌ Failed to clear auth data: $e');
     }
   }
 }
