@@ -1,24 +1,21 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ilearn/domain/usecases/get_lesson_vocabulary.dart';
-import 'package:ilearn/domain/usecases/get_vocabulary_progress.dart';
-import 'package:ilearn/domain/usecases/submit_vocabulary_progress.dart';
+import 'package:ilearn/data/datasources/remote/learning_remote_datasource.dart';
+import 'package:ilearn/data/repositories/vocabulary_repository_impl.dart';
 import 'package:ilearn/presentation/bloc/vocabulary/vocabulary_event.dart';
 
 export 'vocabulary_event.dart';
 
 class VocabularyBloc extends Bloc<VocabularyEvent, VocabularyState> {
-  final GetLessonVocabulary getLessonVocabulary;
-  final GetVocabularyProgress getVocabularyProgress;
-  final SubmitVocabularyProgress submitVocabularyProgress;
+  final LearningRemoteDataSource dataSource;
+  final VocabularyRepository? repository;
 
-  VocabularyBloc({
-    required this.getLessonVocabulary,
-    required this.getVocabularyProgress,
-    required this.submitVocabularyProgress,
-  }) : super(VocabularyInitial()) {
+  VocabularyBloc({required this.dataSource, this.repository})
+    : super(VocabularyInitial()) {
     on<LoadVocabularyLesson>(_onLoadVocabularyLesson);
     on<LoadVocabularyProgress>(_onLoadVocabularyProgress);
     on<SubmitProgress>(_onSubmitProgress);
+    on<MarkVocabularyLearned>(_onMarkVocabularyLearned);
+    on<BatchMarkVocabulariesLearned>(_onBatchMarkVocabulariesLearned);
   }
 
   Future<void> _onLoadVocabularyLesson(
@@ -27,76 +24,80 @@ class VocabularyBloc extends Bloc<VocabularyEvent, VocabularyState> {
   ) async {
     emit(VocabularyLoading());
 
-    final vocabularyResult = await getLessonVocabulary(event.lessonId);
-
-    await vocabularyResult.fold(
-      (failure) async {
-        emit(VocabularyError(failure.message));
-      },
-      (lessonData) async {
-        // Try to load progress
-        final progressResult = await getVocabularyProgress(event.lessonId);
-
-        progressResult.fold(
-          (failure) {
-            // Progress loading failed, but we still have vocabulary data
-            emit(VocabularyLoaded(lessonData: lessonData, progress: null));
-          },
-          (progress) {
-            emit(VocabularyLoaded(lessonData: lessonData, progress: progress));
-          },
-        );
-      },
-    );
+    try {
+      final lessonData = await dataSource.getLessonVocabulary(event.lessonId);
+      emit(VocabularyLoaded(lessonData: lessonData));
+    } catch (e) {
+      emit(VocabularyError(e.toString()));
+    }
   }
 
   Future<void> _onLoadVocabularyProgress(
     LoadVocabularyProgress event,
     Emitter<VocabularyState> emit,
   ) async {
-    if (state is VocabularyLoaded) {
-      final currentState = state as VocabularyLoaded;
-
-      final progressResult = await getVocabularyProgress(event.lessonId);
-
-      progressResult.fold(
-        (failure) {
-          // Keep current state if progress loading fails
-        },
-        (progress) {
-          emit(currentState.copyWith(progress: progress));
-        },
-      );
-    }
+    // TODO: Implement progress tracking
   }
 
   Future<void> _onSubmitProgress(
     SubmitProgress event,
     Emitter<VocabularyState> emit,
   ) async {
-    final currentState = state;
-    emit(ProgressSubmitting());
+    // TODO: Implement progress submission
+  }
 
-    final result = await submitVocabularyProgress(
-      event.lessonId,
-      event.progressData,
-    );
+  Future<void> _onMarkVocabularyLearned(
+    MarkVocabularyLearned event,
+    Emitter<VocabularyState> emit,
+  ) async {
+    if (repository == null) return;
 
-    result.fold(
-      (failure) {
-        emit(ProgressSubmitError(failure.message));
-        // Restore previous state after a delay
-        Future.delayed(const Duration(seconds: 2), () {
-          if (currentState is VocabularyLoaded) {
-            emit(currentState);
-          }
-        });
-      },
-      (_) {
-        emit(ProgressSubmitted());
-        // Reload progress after successful submission
-        add(LoadVocabularyProgress(event.lessonId));
-      },
-    );
+    try {
+      final result = await repository!.markItemLearned(
+        lessonId: event.lessonId,
+        itemId: event.vocabularyId,
+        itemType: 'VOCABULARY',
+      );
+
+      result.fold(
+        (failure) {
+          // Failure - show error but don't change state dramatically
+          print('Failed to mark vocabulary as learned: ${failure.message}');
+        },
+        (_) {
+          // Success - reload lesson to get updated status
+          add(LoadVocabularyLesson(event.lessonId));
+        },
+      );
+    } catch (e) {
+      print('Error marking vocabulary as learned: $e');
+    }
+  }
+
+  Future<void> _onBatchMarkVocabulariesLearned(
+    BatchMarkVocabulariesLearned event,
+    Emitter<VocabularyState> emit,
+  ) async {
+    if (repository == null) return;
+
+    try {
+      final result = await repository!.batchMarkLearned(
+        lessonId: event.lessonId,
+        itemType: 'vocabulary',
+        itemIds: event.vocabularyIds,
+      );
+
+      result.fold(
+        (failure) {
+          print('Failed to batch mark vocabularies: ${failure.message}');
+        },
+        (_) {
+          // Success - reload lesson
+          add(LoadVocabularyLesson(event.lessonId));
+        },
+      );
+    } catch (e) {
+      print('Error batch marking vocabularies: $e');
+    }
   }
 }

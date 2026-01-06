@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:ilearn/domain/entities/vocabulary.dart';
-import 'package:ilearn/domain/entities/vocabulary_progress.dart';
+import 'package:ilearn/data/models/lesson_vocabulary_model.dart';
 
 abstract class VocabularyEvent extends Equatable {
   const VocabularyEvent();
@@ -37,6 +36,32 @@ class SubmitProgress extends VocabularyEvent {
   List<Object?> get props => [lessonId, progressData];
 }
 
+class MarkVocabularyLearned extends VocabularyEvent {
+  final String lessonId;
+  final String vocabularyId;
+
+  const MarkVocabularyLearned({
+    required this.lessonId,
+    required this.vocabularyId,
+  });
+
+  @override
+  List<Object?> get props => [lessonId, vocabularyId];
+}
+
+class BatchMarkVocabulariesLearned extends VocabularyEvent {
+  final String lessonId;
+  final List<String> vocabularyIds;
+
+  const BatchMarkVocabulariesLearned({
+    required this.lessonId,
+    required this.vocabularyIds,
+  });
+
+  @override
+  List<Object?> get props => [lessonId, vocabularyIds];
+}
+
 abstract class VocabularyState extends Equatable {
   const VocabularyState();
 
@@ -49,22 +74,15 @@ class VocabularyInitial extends VocabularyState {}
 class VocabularyLoading extends VocabularyState {}
 
 class VocabularyLoaded extends VocabularyState {
-  final VocabularyLessonData lessonData;
-  final VocabularyProgress? progress;
+  final LessonVocabularyDataModel lessonData;
 
-  const VocabularyLoaded({required this.lessonData, this.progress});
+  const VocabularyLoaded({required this.lessonData});
 
   @override
-  List<Object?> get props => [lessonData, progress];
+  List<Object?> get props => [lessonData];
 
-  VocabularyLoaded copyWith({
-    VocabularyLessonData? lessonData,
-    VocabularyProgress? progress,
-  }) {
-    return VocabularyLoaded(
-      lessonData: lessonData ?? this.lessonData,
-      progress: progress ?? this.progress,
-    );
+  VocabularyLoaded copyWith({LessonVocabularyDataModel? lessonData}) {
+    return VocabularyLoaded(lessonData: lessonData ?? this.lessonData);
   }
 }
 
