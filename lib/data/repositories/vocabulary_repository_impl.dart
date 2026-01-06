@@ -15,6 +15,16 @@ abstract class VocabularyRepository {
     String lessonId,
     Map<String, dynamic> progressData,
   );
+  Future<Either<Failure, void>> markItemLearned({
+    required String lessonId,
+    required String itemId,
+    required String itemType,
+  });
+  Future<Either<Failure, void>> batchMarkLearned({
+    required String lessonId,
+    required String itemType,
+    required List<String> itemIds,
+  });
 }
 
 class VocabularyRepositoryImpl implements VocabularyRepository {
@@ -53,6 +63,42 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
   ) async {
     try {
       await remoteDataSource.submitProgress(lessonId, progressData);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> markItemLearned({
+    required String lessonId,
+    required String itemId,
+    required String itemType,
+  }) async {
+    try {
+      await remoteDataSource.markItemLearned(
+        lessonId: lessonId,
+        itemId: itemId,
+        itemType: itemType,
+      );
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> batchMarkLearned({
+    required String lessonId,
+    required String itemType,
+    required List<String> itemIds,
+  }) async {
+    try {
+      await remoteDataSource.batchMarkLearned(
+        lessonId: lessonId,
+        itemType: itemType,
+        itemIds: itemIds,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

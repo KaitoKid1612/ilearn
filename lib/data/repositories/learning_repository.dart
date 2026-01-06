@@ -11,10 +11,10 @@ class LearningRepository {
   LearningRepository(this._remoteDataSource);
 
   /// Get dashboard data
-  Future<Either<Failure, DashboardDataModel>> getDashboard() async {
+  Future<Either<Failure, DashboardResponseModel>> getDashboard() async {
     try {
       final response = await _remoteDataSource.getDashboard();
-      return Right(response.data);
+      return Right(response);
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } on UnauthorizedException catch (e) {
